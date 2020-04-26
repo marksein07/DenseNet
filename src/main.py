@@ -41,7 +41,7 @@ def parse():
     parser.add_argument('--weight_decay', type=float, default=1e-4, help='optimizer L2 penalty')
     parser.add_argument('--momentum', type=float, default=0.9, help='optimizer momentum')
     parser.add_argument('--cuda', type=int, default=0, help='GPU Index for training')
-    parser.add_argument('--log', type=str, default='log', help='tensorboard log directory')
+    parser.add_argument('--log', type=str, default='../log', help='tensorboard log directory')
     parser.add_argument('--preceed', type=bool, default=False, help='whether load a pretrain model')
 
     try:
@@ -55,10 +55,10 @@ def parse():
 def dataloader(BATCH_SIZE, download=True, shuffle=True, augmentation=False):
     normal_transformations = transforms.Compose( [transforms.ToTensor(), ])
 
-    trainset = torchvision.datasets.CIFAR10(root='./cifar10', train=True, download=download, transform=normal_transformations)
+    trainset = torchvision.datasets.CIFAR10(root='../cifar10', train=True, download=download, transform=normal_transformations)
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=BATCH_SIZE, shuffle=shuffle, num_workers=2)
 
-    testset = torchvision.datasets.CIFAR10(root='./cifar10', train=False, download=download, transform=normal_transformations)
+    testset = torchvision.datasets.CIFAR10(root='../cifar10', train=False, download=download, transform=normal_transformations)
     testloader = torch.utils.data.DataLoader(testset, batch_size=BATCH_SIZE, shuffle=shuffle, num_workers=2)
     if augmentation :
         transformation = [
@@ -71,7 +71,7 @@ def dataloader(BATCH_SIZE, download=True, shuffle=True, augmentation=False):
             transforms.ToTensor(),
         ] )
 
-        augmentation_trainset = torchvision.datasets.CIFAR10(root='./cifar10', train=True, download=download, transform=augmentation_transformation)
+        augmentation_trainset = torchvision.datasets.CIFAR10(root='../cifar10', train=True, download=download, transform=augmentation_transformation)
         augmentation_trainloader = torch.utils.data.DataLoader(augmentation_trainset, batch_size=BATCH_SIZE, shuffle=shuffle, num_workers=2)
         return trainloader, testloader, augmentation_trainloader
 
