@@ -4,7 +4,7 @@ import argparse
 import numpy as np
 #from environment import Environment
 
-#seed = 11037
+#seed = 7704
 import torch
 from torch import nn
 from torch import optim
@@ -35,8 +35,15 @@ print(torch.__version__)
 
 def parse():
     parser = argparse.ArgumentParser(description="DensetNet - 2020 by marksein07")
-    parser.add_argument('--test_pg', action='store_true', help='whether test policy gradient')
-    parser.add_argument('--test_dqn', action='store_true', help='whether test DQN')
+    #parser.add_argument('--optimizer')
+    parser.add_argument('--batch_size', type=int,default=64, help='traing and testing batch size')
+    parser.add_argument('--learning_rate', type=float, default=1e-1, help='optimizer learning rate')
+    parser.add_argument('--weight_decay', type=float, default=1e-4, help='optimizer L2 penalty')
+    parser.add_argument('--momentum', type=float, default=0.9, help='optimizer momentum')
+    parser.add_argument('--cuda', type=int, default=0, help='GPU Index for training')
+    parser.add_argument('--log', type=str, default='log', help='tensorboard log directory')
+    parser.add_argument('--preceed', type=bool, default=False, help='whether load a pretrain model')
+
     try:
         from argument import add_arguments
         parser = add_arguments(parser)
@@ -45,61 +52,53 @@ def parse():
     args = parser.parse_args()
     return args
 
-def dataloader(BATCH_SIZE):
-    transformation = [
-    #transforms.RandomGrayscale(p=1.0),
-    transforms.RandomCrop(32),
-    #transforms.ColorJitter(0.1,0.1,0.1,0.1),
-    transforms.RandomHorizontalFlip(p=1.0),
-    #transforms.RandomVerticalFlip(p=1.0), 
-    ]
-    random_transformation = [transforms.RandomChoice(transformation)]
-    augmentation_transform = transforms.Compose(
-        [transforms.RandomApply(random_transformation, p=1),
-         transforms.ToTensor(), ])
-         #transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)), ])
-    normal_transform = transforms.Compose(
-        [transforms.ToTensor(), ])
-         #transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)), ])
+def dataloader(BATCH_SIZE, download=True, shuffle=True, augmentation=False):
+    normal_transformations = transforms.Compose( [transforms.ToTensor(), ])
 
-    trainset = torchvision.datasets.CIFAR10(root='./cifar10', train=True,
-                                            download=True, transform=normal_transform)
-    trainloader = torch.utils.data.DataLoader(trainset, batch_size=BATCH_SIZE,
-                                              shuffle=True, num_workers=2)
+    trainset = torchvision.datasets.CIFAR10(root='./cifar10', train=True, download=download, transform=normal_transformations)
+    trainloader = torch.utils.data.DataLoader(trainset, batch_size=BATCH_SIZE, shuffle=shuffle, num_workers=2)
 
-    augmentation_trainset = torchvision.datasets.CIFAR10(root='./cifar10', train=True,
-                                            download=True, transform=augmentation_transform)
-    augmentation_trainloader = torch.utils.data.DataLoader(augmentation_trainset, batch_size=BATCH_SIZE,
-                                              shuffle=True, num_workers=2)
+    testset = torchvision.datasets.CIFAR10(root='./cifar10', train=False, download=download, transform=normal_transformations)
+    testloader = torch.utils.data.DataLoader(testset, batch_size=BATCH_SIZE, shuffle=shuffle, num_workers=2)
+    if augmentation :
+        transformation = [
+            transforms.RandomCrop(32),
+            transforms.RandomHorizontalFlip(p=1.0),
+        ]
 
-    testset = torchvision.datasets.CIFAR10(root='./cifar10', train=False,
-                                           download=True, transform=normal_transform)
-    testloader = torch.utils.data.DataLoader(testset, batch_size=BATCH_SIZE,
-                                             shuffle=True, num_workers=2)
+        augmentation_transformation = transforms.Compose( [
+            transforms.RandomChoice(transformation),
+            transforms.ToTensor(),
+        ] )
 
-    classes = ('plane', 'car', 'bird', 'cat',
-               'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
+        augmentation_trainset = torchvision.datasets.CIFAR10(root='./cifar10', train=True, download=download, transform=augmentation_transformation)
+        augmentation_trainloader = torch.utils.data.DataLoader(augmentation_trainset, batch_size=BATCH_SIZE, shuffle=shuffle, num_workers=2)
+        return trainloader, testloader, augmentation_trainloader
+
+
     return trainloader, testloader
 
-def run():
-    BATCH_SIZE = 64
-    DOWNLOAD_MNIST = True
-    preceed=False
-    log='log'
-    device = torch.device('cuda:0')
+def training_setting():
+    pass
+
+def run(args):
+    BATCH_SIZE = args.batch_size
+    preceed = args.preceed
+    log = args.log
+    device = torch.device('cuda:'+str(args.cuda))
     
-    LR = 1e-1
+    LR = args.learning_rate
 
     trainloader, testloader = dataloader(BATCH_SIZE)
     
-    cnn = DenseNet( growth_rate=(12,12,12), block_config=(40,40,40),
+    model = DenseNet( growth_rate=(12,12,12), block_config=(40,40,40),
                    num_init_features=16, bn_size=4, drop_rate=0.2, num_classes=10, 
-                   memory_efficient=True, bias=False)
+                   memory_efficient=False, bias=False)
     # !!!!!!!! Change in here !!!!!!!!! #
-    cnn.cuda()      # Moves all model parameters and buffers to the GPU.
-    #cnn = torch.nn.DataParallel(cnn,device_ids=[0,1]).to(device)
+    model.to(device)      # Moves all model parameters and buffers to the GPU.
+    #model = torch.nn.DataParallel(cnn,device_ids=[0,1]).to(device)
     if preceed :
-        cnn.load_state_dict(torch.load("DenseNetL=100,k=12"))
+        model.load_state_dict(torch.load("DenseNetL=100,k=12"))
 
     SGD     = torch.optim.SGD
     Adagrad = torch.optim.Adagrad
@@ -107,9 +106,12 @@ def run():
 
     opt = SGD
 
-    optimizer = opt(cnn.parameters(), lr=LR, weight_decay=1e-4, momentum=0.9)
-    #optimizer = opt(cnn.parameters(), lr=LR, weight_decay=1e-3)
-    #semantic_optimizer = torch.optim.Adagrad(cnn.parameters(), lr=1e-5)
+    optimizer = opt( model.parameters(),
+                    lr           = args.learning_rate,
+                    weight_decay = args.weight_decay,
+                    momentum     = args.momentum )
+    #optimizer = opt(model.parameters(), lr=LR, weight_decay=1e-3)
+    #semantic_optimizer = torch.optim.Adagrad(model.parameters(), lr=1e-5)
     criterion = nn.CrossEntropyLoss()
 
     epoch = 0
@@ -117,10 +119,10 @@ def run():
         shutil.rmtree(log)
     writer = SummaryWriter(log)
     
-    train(cnn, optimizer, criterion, trainloader, testloader, device, channel_normalization, writer, opt, LR)
+    train(model, optimizer, criterion, trainloader, testloader, device, channel_normalization, writer, opt, LR)
 
     
 if __name__ == '__main__':
-    #args = parse()
-    #run(args)
-    run()
+    args = parse()
+    run(args)
+    #run()
