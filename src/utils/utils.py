@@ -81,7 +81,10 @@ def train(model,
           epoch = 0, 
           max_epoch = 300, ) :
     epoch_duration = 1
-
+    training_error_rate_list = []
+    testing_error_rate_list = []
+    training_loss_list = []
+    testing_loss_list = []
     for epoch in range(epoch, max_epoch):  # loop over the dataset multiple times
 
         if epoch > 1 and (epoch % 150 == 0 or epoch % 225 == 0) :
@@ -107,5 +110,10 @@ def train(model,
                            {'Training' : training_loss, 
                             'Testing'  : testing_loss,  
                            }, epoch + 1)
+        training_error_rate_list.append(1-training_acc)
+        testing_error_rate_list.append(1-testing_acc)
+        training_loss_list.append(training_loss)
+        testing_loss_list.append(testing_loss)
 
     print('Finished Training')
+    return training_error_rate_list, testing_error_rate_list, training_loss_list, testing_loss_list

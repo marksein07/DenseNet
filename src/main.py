@@ -15,7 +15,6 @@ from torchvision import transforms
 
 import numpy as np
 
-import matplotlib.pyplot as plt
 
 from tensorboardX import SummaryWriter
 
@@ -77,8 +76,18 @@ def dataloader(BATCH_SIZE, download=True, shuffle=True, augmentation=False):
 
 
     return trainloader, testloader
-
-def training_setting():
+def plot(*data_points_list, filename = "plot") :
+    import matplotlib
+    if os.environ.get('DISPLAY','') == '':
+        print('no display found. Using non-interactive Agg backend')
+        matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+    plt.style.use('ggplot')
+    plt.yscale('log')
+    for data_points in data_points_list :
+        plt.plot(data_points)
+    plt.savefig(filename)
+def training_setting(model, optimizer, lr, device, log, criterion, ):
     pass
 
 def run(args):
@@ -119,10 +128,12 @@ def run(args):
         shutil.rmtree(log)
     writer = SummaryWriter(log)
     
-    train(model, optimizer, criterion, trainloader, testloader, device, channel_normalization, writer, opt, LR)
-
+    training_error_rate, testing_error_rate, \
+    training_loss, testing_loss = train(model, optimizer, criterion, trainloader, testloader, 
+                                        device, channel_normalization, writer, opt, LR)
+    plot(training_loss, testing_loss, filename='../loss')
+    plot(training_error_rate, testing_error_rate, filename='../error_rate')
     
 if __name__ == '__main__':
     args = parse()
     run(args)
-    #run()

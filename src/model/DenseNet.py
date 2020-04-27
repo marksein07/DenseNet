@@ -45,8 +45,8 @@ class _DenseLayer(nn.Module):
         # type: (List[Tensor]) -> bool
         for tensor in input:
             if tensor.requires_grad:
-                return False
-        return True
+                return True
+        return False
     
     @torch.jit.unused  # noqa: T484
     def call_checkpoint_bottleneck(self, input):
