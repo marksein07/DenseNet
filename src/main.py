@@ -20,7 +20,7 @@ from tensorboardX import SummaryWriter
 
 from tqdm import tqdm
 import os
-os.environ["CUDA_VISIBLE_DEVICES"]="1"
+os.environ["CUDA_VISIBLE_DEVICES"]="0"
 
 import shutil
 
@@ -100,9 +100,9 @@ def run(args):
 
     trainloader, testloader = dataloader(BATCH_SIZE)
     
-    model = DenseNet( growth_rate=(12,12,12), block_config=(40,40,40),
-                   num_init_features=16, bn_size=4, drop_rate=0.2, num_classes=10, 
-                   memory_efficient=False, bias=False)
+    model = DenseNet( growth_rate=12, DenseBlock_layer_num=(40,40,40), 
+                     bottle_neck_size=4, dropout_rate=0.2, compression_rate=0.5, num_init_features=20,
+                     num_input_features=3, num_classes=10, bias=False, memory_efficient=False)
     # !!!!!!!! Change in here !!!!!!!!! #
     model.to(device)      # Moves all model parameters and buffers to the GPU.
     #model = torch.nn.DataParallel(cnn,device_ids=[0,1]).to(device)
