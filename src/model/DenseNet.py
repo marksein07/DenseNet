@@ -5,12 +5,14 @@ import torch.nn.functional as F
 import torch.utils.checkpoint as cp
 from collections import OrderedDict
 from torch import Tensor
+from inplace_abn import InPlaceABN
 
 class BottleNeck(nn.Sequential) :
     def __init__(self, num_input_features, bottle_neck_size, growth_rate, bias,) :
         super(BottleNeck, self).__init__()
-        self.add_module('norm', nn.BatchNorm2d(num_input_features), )
-        self.add_module('relu', nn.ReLU(inplace=True), )
+        #self.add_module('norm', nn.BatchNorm2d(num_input_features), )
+        #self.add_module('relu', nn.ReLU(inplace=True), )
+        self.add_module('abn', InPlaceABN(num_input_features), )
         self.add_module('conv', nn.Conv2d(num_input_features, bottle_neck_size * growth_rate, 
                                           kernel_size=1, stride=1, bias=bias,), )
 
@@ -23,16 +25,18 @@ class _DenseLayer(nn.Module) :
             self.add_module('bottle_neck_layer', BottleNeck(num_input_features, bottle_neck_size, 
                                                       growth_rate, bias, ) )
             self.add_module('layer', nn.Sequential( 
-                nn.BatchNorm2d(bottle_neck_size * growth_rate),
-                nn.ReLU(inplace=True),
+                #nn.BatchNorm2d(bottle_neck_size * growth_rate),
+                #nn.ReLU(inplace=True),
+                InPlaceABN(bottle_neck_size * growth_rate),
                 nn.Conv2d(bottle_neck_size * growth_rate, growth_rate,
                           kernel_size=3, stride=1, padding=1, bias=bias,),
                 nn.Dropout(dropout_rate, inplace = True),
             ) )
         else :
             self.add_module('layer', nn.Sequential( 
-                nn.BatchNorm2d(num_input_features),
-                nn.ReLU(inplace=True),
+                #nn.BatchNorm2d(num_input_features),
+                #nn.ReLU(inplace=True),
+                InPlaceABN(num_input_features),
                 nn.Conv2d(num_input_features, growth_rate,
                           kernel_size=3, stride=1, padding=1, bias=bias,),
                 nn.Dropout(dropout_rate, inplace = True),
@@ -61,7 +65,7 @@ class _DenseLayer(nn.Module) :
                 bottle_neck_features = self.bottle_neck_layer(self.concat_features(prev_features))
                 output = self.layer(bottle_neck_features)
             else :
-                output = self.layer(prev_features)
+                output = self.layer(self.concat_features(prev_features))
         return output
     
 class DenseBlock(nn.ModuleDict) :
@@ -87,8 +91,9 @@ class DenseBlock(nn.ModuleDict) :
 class Transition(nn.Sequential) :
     def __init__(self, num_input_features, num_output_features, bias):
         super(Transition, self).__init__()
-        self.add_module('norm', nn.BatchNorm2d(num_input_features))
-        self.add_module('relu', nn.ReLU(inplace=True))
+        #self.add_module('norm', nn.BatchNorm2d(num_input_features))
+        #self.add_module('relu', nn.ReLU(inplace=True))
+        self.add_module('abn', InPlaceABN(num_input_features), )
         self.add_module('conv', nn.Conv2d(num_input_features, num_output_features,
                                           kernel_size=1, stride=1, bias=bias,))
         self.add_module('pool', nn.AvgPool2d(kernel_size=2, stride=2))
@@ -105,8 +110,9 @@ class DenseNet(nn.Module) :
                                 stride=1,
                                 padding=2,
                                 bias=bias, )),
-            ('norm0', nn.BatchNorm2d(num_init_features)),
-            ('relu0', nn.ReLU(inplace=True)),
+            #('norm0', nn.BatchNorm2d(num_init_features)),
+            #('relu0', nn.ReLU(inplace=True)),
+            ('abn0', InPlaceABN(num_init_features), ),
             #('pool0', nn.AvgPool2d(kernel_size=3, stride=2, padding=1)),
         ]))
         
@@ -127,8 +133,9 @@ class DenseNet(nn.Module) :
                 self.features_layers.add_module('Transition%d' % idx, Transition_layer)
                 num_features = num_output_features
         idx+=1
-        self.features_layers.add_module('norm%d' % idx, nn.BatchNorm2d(num_features))
-        self.features_layers.add_module('relu%d' % idx, nn.ReLU(inplace=True))
+        #self.features_layers.add_module('norm%d' % idx, nn.BatchNorm2d(num_features))
+        #self.features_layers.add_module('relu%d' % idx, nn.ReLU(inplace=True))
+        self.add_module('abn%d' % idx, InPlaceABN(num_features), )
         self.features_layers.add_module('GlobalAvgPool%d' % idx, nn.AdaptiveAvgPool2d(1))
         
         self.classifier = nn.Linear(num_features, num_classes, bias=True,)
@@ -137,7 +144,7 @@ class DenseNet(nn.Module) :
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 nn.init.kaiming_normal_(m.weight)
-            elif isinstance(m, nn.BatchNorm2d):
+            elif isinstance(m, InPlaceABN):
                 nn.init.constant_(m.weight, 1)
                 nn.init.constant_(m.bias, 0)
             elif isinstance(m, nn.Linear):
