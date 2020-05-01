@@ -33,6 +33,7 @@ class _DenseLayer(nn.Module) :
                 nn.Dropout(dropout_rate, inplace = True),
             ) )
         else :
+            self.bottle_neck = False
             self.add_module('layer', nn.Sequential( 
                 #nn.BatchNorm2d(num_input_features),
                 #nn.ReLU(inplace=True),
