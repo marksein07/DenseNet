@@ -3,8 +3,8 @@
 Loss Error
 <table>
   <tr>
-    <td>First Screen Page</td>
-    <td>Present day in purple and selected day in pink</td>
+    <td>Loss</td>
+    <td>Error rate</td>
   </tr>
   <tr>
       <td><img src="result/loss.png" alt="loss" width="400"/></td>
