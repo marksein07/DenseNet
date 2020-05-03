@@ -2,9 +2,10 @@
 Dependency : 
 <ol>
     <li>pytorch 1.4.0</li>
+    <li>torchvision 0.5.0</li>
+    <li>[InPalce ABN](https://github.com/mapillary/inplace_abn)</li>
     <li>numpy</li>
     <li>tqdm</li>
-    <li>[InPalce ABN](https://github.com/mapillary/inplace_abn)</li>
 </ol>
 <p>
 The repositroy training a DenseNet model on Cifar10 Dataset, and could be rewrite easily for ImageNet.
