@@ -1,10 +1,8 @@
-# [Densely Connected Convolutional Networks (DenseNet)](https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet)
+# [Densely Connected Convolutional Networks (DenseNet)](https://arxiv.org/abs/1608.06993)
 
-Error :
-![alt text][error]
-
-Loss :
-![alt text][loss]
+## Loss             |  ## Error
+:-------------------------:|:-------------------------:
+![](loss)  |  ![](error)
 
 [error]:result/error_rate.png "Error Rate"
 [loss]:result/loss.png "loss"
