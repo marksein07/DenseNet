@@ -14,9 +14,9 @@ The repositroy training a DenseNet model on Cifar10 Dataset, and could be rewrit
 
 The main goal is training a DenseNet-BC on Cifar10 in single Nivida GPU GTX-1080ti for memory capacity 11 GiB, and the [Inplace ABN](https://arxiv.org/abs/1712.02616) and [Memory-efficient implementation of densenets](https://arxiv.org/abs/1707.06990) are helpful for memory efficient.
     
-<code>usage main.py [--batch_size N][--learning_rate Float][--weight_decay Float][--momentum Float]
+<p><code>usage main.py [--batch_size N][--learning_rate Float][--weight_decay Float][--momentum Float]
                [--cuda N][--log PATH][--preceed Boolean][--training_epoch N]
- 
+ <p>
 optional arguments:
     --batch_size               default=64,                traing and testing batch size
     --learning_rate            default=1e-1,              optimizer learning rate
@@ -26,7 +26,8 @@ optional arguments:
     --log                      default='../result/log',   tensorboard log directory
     --preceed                  default=False,             whether load a pretrain model
     --training_epoch           default=300,               total training epoch
-</code>
+ </p>
+</code></p>
 </p>
 
 ## DenseNet
