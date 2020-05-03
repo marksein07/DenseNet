@@ -2,11 +2,11 @@
 
 <table>
   <tr>
-    <td><h2>Loss</h2></td>
-    <td><h2>Error rate</h2></td>
+    <td>## Loss</td>
+    <td>## Error rate</td>
   </tr>
   <tr>
-      ![bg](#ffffff)<td><img src="result/loss.png" alt="loss" width="400"/></td>
-      ![bg](#ffffff)<td><img src="result/error_rate.png" alt="error" width="400"/></td>
+      <td><img src="result/loss.png" alt="loss" width="400"/></td>
+      <td><img src="result/error_rate.png" alt="error" width="400"/></td>
     </tr>
 </table>
