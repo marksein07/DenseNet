@@ -12,6 +12,13 @@ The repositroy training a DenseNet model on Cifar10 Dataset, and could be rewrit
 
 The main goal is training a DenseNet-BC on Cifar10 in single Nivida GPU GTX-1080ti for memory capacity 11 GiB, and the [Inplace ABN](https://arxiv.org/abs/1712.02616) and [Memory-efficient implementation of densenets](https://arxiv.org/abs/1707.06990) are helpful for memory efficient.
 </p>
+
+<img src="imgs/outline.PNG" alt="outline"/>
+<img src="imgs/DenseNet Structure.PNG" alt="structure"/>
+<img src="imgs/results.PNG" alt="results table"/>
+
+
+## Implement Results
 <table>
   <tr>
       <td><h2>Loss</h2></td>
