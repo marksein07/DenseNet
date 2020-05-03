@@ -18,7 +18,7 @@ The main goal is training a DenseNet-BC on Cifar10 in single Nivida GPU GTX-1080
 ```
 usage main.py [--batch_size N][--learning_rate Float][--weight_decay Float][--momentum Float]
                [--cuda N][--log PATH][--preceed Boolean][--training_epoch N]
- <p>
+
 optional arguments:
     --batch_size               default=64,                traing and testing batch size
     --learning_rate            default=1e-1,              optimizer learning rate
@@ -28,7 +28,7 @@ optional arguments:
     --log                      default='../result/log',   tensorboard log directory
     --preceed                  default=False,             whether load a pretrain model
     --training_epoch           default=300,               total training epoch
- </p>
+
 ```
 </p>
 </p>
