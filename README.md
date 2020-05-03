@@ -1,10 +1,9 @@
 # [Densely Connected Convolutional Networks (DenseNet)](https://arxiv.org/abs/1608.06993)
 
-Loss Error
-<table>
+<table background=ffffff>
   <tr>
-    <td>Loss</td>
-    <td>Error rate</td>
+    <td><h2>Loss</h2></td>
+    <td><h2>Error rate</h2></td>
   </tr>
   <tr>
       <td><img src="result/loss.png" alt="loss" width="400"/></td>
