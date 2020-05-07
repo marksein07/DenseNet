@@ -10,6 +10,15 @@ import numpy as np
 
 from tqdm import tqdm
 
+import matplotlib
+
+import os
+if os.environ.get('DISPLAY','') == '':
+    print('no display found. Using non-interactive Agg backend')
+    matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+plt.style.use('ggplot')
+
 def channel_normalization( inputs, stddev = 1e-2, channel_dim = [2,3] ) :
     return ( inputs - inputs.mean(dim=channel_dim, keepdim=True) ) \
             / inputs.std(dim=channel_dim, keepdim=True) * stddev
@@ -117,3 +126,40 @@ def train(model,
 
     print('Finished Training')
     return training_error_rate_list, testing_error_rate_list, training_loss_list, testing_loss_list
+
+def dataloader(BATCH_SIZE, download=True, shuffle=True, augmentation=False):
+    normal_transformations = transforms.Compose( [transforms.ToTensor(), ])
+
+    trainset = torchvision.datasets.CIFAR10(root='../result/cifar10', train=True, download=download, transform=normal_transformations)
+    trainloader = torch.utils.data.DataLoader(trainset, batch_size=BATCH_SIZE, shuffle=shuffle, num_workers=2)
+
+    testset = torchvision.datasets.CIFAR10(root='../result/cifar10', train=False, download=download, transform=normal_transformations)
+    testloader = torch.utils.data.DataLoader(testset, batch_size=BATCH_SIZE, shuffle=shuffle, num_workers=2)
+    if augmentation :
+        transformation = [
+            transforms.RandomCrop(32),
+            transforms.RandomHorizontalFlip(p=1.0),
+        ]
+
+        augmentation_transformation = transforms.Compose( [
+            transforms.RandomChoice(transformation),
+            transforms.ToTensor(),
+        ] )
+
+        augmentation_trainset = torchvision.datasets.CIFAR10(root='../result/cifar10', train=True, download=download, transform=augmentation_transformation)
+        augmentation_trainloader = torch.utils.data.DataLoader(augmentation_trainset, batch_size=BATCH_SIZE, shuffle=shuffle, num_workers=2)
+        return trainloader, testloader, augmentation_trainloader
+
+
+    return trainloader, testloader
+def plot(data_points_dict, filename="plot", log_scale=True, xlabel='epoch', ylabel='error', title='title') :
+    if log_scale :
+        plt.yscale('log')
+    for label, data_points in data_points_dict.items() :
+        plt.plot(data_points, label=label)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.title(title)
+    plt.legend()
+    plt.savefig(filename)
+    plt.close()

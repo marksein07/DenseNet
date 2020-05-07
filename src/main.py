@@ -17,16 +17,11 @@ import numpy as np
 
 from tensorboardX import SummaryWriter
 
+import pickle
+
 from tqdm import tqdm
 import os
-os.environ["CUDA_VISIBLE_DEVICES"]="0,1"
-
-import matplotlib
-if os.environ.get('DISPLAY','') == '':
-    print('no display found. Using non-interactive Agg backend')
-    matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-plt.style.use('ggplot')
+os.environ["CUDA_VISIBLE_DEVICES"]="0"
 
 import shutil
 
@@ -47,6 +42,7 @@ def parse():
     parser.add_argument('--momentum', type=float, default=0.9, help='optimizer momentum')
     parser.add_argument('--cuda', type=str, default='0', help='GPU Index for training')
     parser.add_argument('--log', type=str, default='../result/log', help='tensorboard log directory')
+    parser.add_argument('--result', type=str, default='../result', help='experiment result')
     parser.add_argument('--preceed', type=bool, default=False, help='whether load a pretrain model')
     parser.add_argument('--training_epoch', type=int, default=300, help='total training epoch')
 
@@ -58,38 +54,6 @@ def parse():
     args = parser.parse_args()
     return args
 
-def dataloader(BATCH_SIZE, download=True, shuffle=True, augmentation=False):
-    normal_transformations = transforms.Compose( [transforms.ToTensor(), ])
-
-    trainset = torchvision.datasets.CIFAR10(root='../result/cifar10', train=True, download=download, transform=normal_transformations)
-    trainloader = torch.utils.data.DataLoader(trainset, batch_size=BATCH_SIZE, shuffle=shuffle, num_workers=2)
-
-    testset = torchvision.datasets.CIFAR10(root='../result/cifar10', train=False, download=download, transform=normal_transformations)
-    testloader = torch.utils.data.DataLoader(testset, batch_size=BATCH_SIZE, shuffle=shuffle, num_workers=2)
-    if augmentation :
-        transformation = [
-            transforms.RandomCrop(32),
-            transforms.RandomHorizontalFlip(p=1.0),
-        ]
-
-        augmentation_transformation = transforms.Compose( [
-            transforms.RandomChoice(transformation),
-            transforms.ToTensor(),
-        ] )
-
-        augmentation_trainset = torchvision.datasets.CIFAR10(root='../result/cifar10', train=True, download=download, transform=augmentation_transformation)
-        augmentation_trainloader = torch.utils.data.DataLoader(augmentation_trainset, batch_size=BATCH_SIZE, shuffle=shuffle, num_workers=2)
-        return trainloader, testloader, augmentation_trainloader
-
-
-    return trainloader, testloader
-def plot(*data_points_list, filename="plot", log_scale=True) :
-    if log_scale :
-        plt.yscale('log')
-    for data_points in data_points_list :
-        plt.plot(data_points)
-    plt.savefig(filename)
-    plt.close()
 def training_setting(model, optimizer, lr, device, log, criterion, ):
     pass
 
@@ -99,6 +63,12 @@ def run(args):
     log = args.log
     device = torch.device('cuda:'+args.cuda)
     LR = args.learning_rate
+    result=args.result
+    if not os.path.isdir(result) :
+        os.mkdir( result, 0o755 );
+    if os.path.isdir(log) :
+        shutil.rmtree(log)
+    writer = SummaryWriter(log)
 
     trainloader, testloader = dataloader(BATCH_SIZE)
     
@@ -129,16 +99,21 @@ def run(args):
     criterion = nn.CrossEntropyLoss()
 
     epoch = 0
-    if os.path.isdir(log) :
-        shutil.rmtree(log)
-    writer = SummaryWriter(log)
     
     training_error_rate, testing_error_rate, \
     training_loss, testing_loss = train(model, optimizer, criterion, trainloader, testloader, 
                                         device, channel_normalization, writer, opt, LR, 
                                         max_epoch = args.training_epoch, )
-    plot(training_loss, testing_loss, filename='../result/loss')
-    plot(training_error_rate, testing_error_rate, filename='../result/error_rate', log_scale=False)
+    loss = dict({'Training':training_loss, 'Validation':testing_loss})
+    error_rate = dict({'Training':training_error_rate, 'Validation':testing_error_rate})
+    
+    with open('../result/loss.pickle', 'wb') as file :
+        pickle.dump(loss, file)
+    with open('../result/error_rate.pickle', 'wb') as file :
+        pickle.dump(error_rate, file)
+    
+    plot(loss, filename='../result/loss', ylabel='Loss', title='Loss')
+    plot(error_rate, filename='../result/error_rate', ylabel='Error rate', title='Error rate')
     
 if __name__ == '__main__':
     args = parse()
