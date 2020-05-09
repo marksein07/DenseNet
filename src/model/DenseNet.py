@@ -114,7 +114,7 @@ class DenseNet(nn.Module) :
             #('norm0', nn.BatchNorm2d(num_init_features)),
             #('relu0', nn.ReLU(inplace=True)),
             ('abn0', InPlaceABN(num_init_features), ),
-            #('pool0', nn.AvgPool2d(kernel_size=3, stride=2, padding=1)),
+            #('pool0', nn.MaxPool2d(kernel_size=3, stride=2, padding=1)), ## for ImageNet
         ]))
         
         num_features = num_init_features

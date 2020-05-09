@@ -36,6 +36,15 @@ print(torch.__version__)
 def parse():
     parser = argparse.ArgumentParser(description="DensetNet - 2020 by marksein07")
     #parser.add_argument('--optimizer')
+    parser.add_argument('--memory_efficient', type=float, default=0.9, help='memory efficient on DenseNet')
+    parser.add_argument('--bias', type=float, default=0.9, help='Apply bias on DenseNet')
+    parser.add_argument('--num_init_features', type=int, default=0.9, help='init features number')
+    parser.add_argument('--compression_rate', type=float, default=0.5, help='DenseNet compression rate')
+    parser.add_argument('--dropout_rate', type=float, default=0.2, help='dropout rate')
+    parser.add_argument('--bottleneck_size', type=int, default=4, help='DenseNet bottleneck size')
+    parser.add_argument('--layer_num', type=int, default=40, help='DenseNet layers number')
+    parser.add_argument('--growth_rate', type=float, default=0.5, help='DenseNet growth rate')
+    
     parser.add_argument('--batch_size', type=int,default=64, help='traing and testing batch size')
     parser.add_argument('--learning_rate', type=float, default=1e-1, help='optimizer learning rate')
     parser.add_argument('--weight_decay', type=float, default=1e-4, help='optimizer L2 penalty')
@@ -45,6 +54,11 @@ def parse():
     parser.add_argument('--result', type=str, default='../result', help='experiment result')
     parser.add_argument('--preceed', type=bool, default=False, help='whether load a pretrain model')
     parser.add_argument('--training_epoch', type=int, default=300, help='total training epoch')
+    
+    optimizer_group = parser.add_mutually_exclusive_group()
+    optimizer_group.add_argument('--SGD', action='store_true', default=True, help='Choose SGD as optimizer')
+    optimizer_group.add_argument('--Adam', action='store_true', default=False, help='Choose Adam as optimizer')
+    optimizer_group.add_argument('--Adagrad', action='store_true', default=False, help='Choose Adagrad as optimizer')
 
     try:
         from argument import add_arguments
@@ -54,11 +68,9 @@ def parse():
     args = parser.parse_args()
     return args
 
-def training_setting(model, optimizer, lr, device, log, criterion, ):
-    pass
 
 def run(args):
-    BATCH_SIZE = args.batch_size
+    batch_size = args.batch_size
     preceed = args.preceed
     log = args.log
     device = torch.device('cuda:'+args.cuda)
@@ -70,12 +82,13 @@ def run(args):
         shutil.rmtree(log)
     writer = SummaryWriter(log)
 
-    trainloader, testloader = dataloader(BATCH_SIZE)
+    trainloader, testloader = dataloader(batch_size)
     
-    model = DenseNet( growth_rate=12, DenseBlock_layer_num=(40,40,40), 
-                     bottle_neck_size=4, dropout_rate=0.2, compression_rate=0.5, num_init_features=16,
+    model = DenseNet( growth_rate=args.growth_rate, DenseBlock_layer_num=(40,40,40), 
+                     bottle_neck_size=args.bottleneck_size, dropout_rate=args.dropout_rate, 
+                     compression_rate=args.compression_rate, num_init_features=args.num_init_features,
                      num_input_features=3, num_classes=10, bias=False, memory_efficient=False)
-    # !!!!!!!! Change in here !!!!!!!!! #
+    
     if len(args.cuda) == 1 :
         model.to(device)      # Moves all model parameters and buffers to the GPU.
     elif len(args.cuda) > 1 :
@@ -84,18 +97,18 @@ def run(args):
     if preceed :
         model.load_state_dict(torch.load("DenseNetL=100,k=12"))
 
-    SGD     = torch.optim.SGD
-    Adagrad = torch.optim.Adagrad
-    Adam    = torch.optim.Adam
-
-    opt = SGD
+    if args.Adam :
+        opt = torch.optim.Adam
+    elif args.Adagrad :
+        opt = torch.optim.Adagrad
+    elif args.SGD :
+        opt = torch.optim.SGD
 
     optimizer = opt( model.parameters(),
                     lr           = args.learning_rate,
                     weight_decay = args.weight_decay,
                     momentum     = args.momentum )
-    #optimizer = opt(model.parameters(), lr=LR, weight_decay=1e-3)
-    #semantic_optimizer = torch.optim.Adagrad(model.parameters(), lr=1e-5)
+    
     criterion = nn.CrossEntropyLoss()
 
     epoch = 0
