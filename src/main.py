@@ -126,7 +126,8 @@ def run(args):
         pickle.dump(error_rate, file)
     
     plot(loss, filename='../result/loss', ylabel='Loss', title='Loss')
-    plot(error_rate, filename='../result/error_rate', ylabel='Error rate', title='Error rate')
+    plot(error_rate, filename='../result/error_rate', ylabel='Error rate', 
+         title='Error rate', log_scale=False)
     
 if __name__ == '__main__':
     args = parse()
