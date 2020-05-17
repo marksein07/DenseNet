@@ -46,7 +46,7 @@ class _DenseLayer(nn.Module) :
     def concat_features(self, inputs ) :
         return torch.cat( inputs, dim = 1 )
     def memory_checkpoint(self, func) :
-        def closure(inputs) :
+        def closure(*inputs) :
             concat_features = self.concat_features(inputs)
             return func(concat_features)
         return closure
@@ -57,10 +57,10 @@ class _DenseLayer(nn.Module) :
         
         if self.memory_efficient and any([tensor.requires_grad for tensor in prev_features]) :
             if self.bottle_neck :
-                bottle_neck_features = cp.checkpoint(self.memory_checkpoint(self.bottle_neck_layer), prev_features)
+                bottle_neck_features = cp.checkpoint(self.memory_checkpoint(self.bottle_neck_layer), *prev_features)
                 output = self.layer(bottle_neck_features)
             else :
-                output = memory_checkpoint(self.layer, prev_features)
+                output = cp.checkpoint(self.memory_checkpoint(self.layer), *prev_features)
         else :
             if self.bottle_neck :
                 bottle_neck_features = self.bottle_neck_layer(self.concat_features(prev_features))

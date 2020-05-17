@@ -38,12 +38,12 @@ def parse():
     #parser.add_argument('--optimizer')
     parser.add_argument('--memory_efficient', type=float, default=0.9, help='memory efficient on DenseNet')
     parser.add_argument('--bias', type=float, default=0.9, help='Apply bias on DenseNet')
-    parser.add_argument('--num_init_features', type=int, default=0.9, help='init features number')
+    parser.add_argument('--num_init_features', type=int, default=16, help='init features number')
     parser.add_argument('--compression_rate', type=float, default=0.5, help='DenseNet compression rate')
     parser.add_argument('--dropout_rate', type=float, default=0.2, help='dropout rate')
     parser.add_argument('--bottleneck_size', type=int, default=4, help='DenseNet bottleneck size')
-    parser.add_argument('--layer_num', type=int, default=40, help='DenseNet layers number')
-    parser.add_argument('--growth_rate', type=float, default=0.5, help='DenseNet growth rate')
+    parser.add_argument('--layer_num', type=int, default=100, help='DenseNet layers number')
+    parser.add_argument('--growth_rate', type=int, default=12, help='DenseNet growth rate')
     
     parser.add_argument('--batch_size', type=int,default=64, help='traing and testing batch size')
     parser.add_argument('--learning_rate', type=float, default=1e-1, help='optimizer learning rate')
@@ -84,10 +84,10 @@ def run(args):
 
     trainloader, testloader = dataloader(batch_size)
     
-    model = DenseNet( growth_rate=args.growth_rate, DenseBlock_layer_num=(40,40,40), 
+    model = DenseNet( growth_rate=args.growth_rate, DenseBlock_layer_num=(100,100,100), 
                      bottle_neck_size=args.bottleneck_size, dropout_rate=args.dropout_rate, 
                      compression_rate=args.compression_rate, num_init_features=args.num_init_features,
-                     num_input_features=3, num_classes=10, bias=False, memory_efficient=False)
+                     num_input_features=3, num_classes=10, bias=False, memory_efficient=True)
     
     if len(args.cuda) == 1 :
         model.to(device)      # Moves all model parameters and buffers to the GPU.
