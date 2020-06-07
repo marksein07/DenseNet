@@ -1,7 +1,7 @@
 # [Densely Connected Convolutional Networks (DenseNet)](https://arxiv.org/abs/1608.06993)
 
 <p>
-The repositroy training a DenseNet model on Cifar10 Dataset, and could be rewrite easily for ImageNet.
+The repositroy training a DenseNet model on Cifar10 Dataset, and could be rewrited easily for ImageNet.
 
 The main goal is training a DenseNet-BC on Cifar10 in single Nivida GPU GTX-1080ti for memory capacity 11 GiB, and the [Inplace ABN](https://arxiv.org/abs/1712.02616) and [Memory-efficient implementation of densenets](https://arxiv.org/abs/1707.06990) are helpful for memory efficient.
 </p>
